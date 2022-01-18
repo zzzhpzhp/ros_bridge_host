@@ -1,0 +1,4 @@
+# 配置接收来自算法板的ZMQ消息
+namespace: robot
+sub_address: tcp://localhost:5556
+pub_address: tcp://*:5557

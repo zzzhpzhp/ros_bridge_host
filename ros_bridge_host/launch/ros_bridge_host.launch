@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="debug" default="false" />
+    <arg if="$(arg debug)" name="launch_prefix" value="xterm -e gdb --args " />
+    <arg unless="$(arg debug)" name="launch_prefix" value="" />
+
+    <node pkg="ros_bridge_host" type="ros_bridge_host_node" respawn="false" name="ros_bridge_host" output="screen" launch-prefix="$(arg launch_prefix)">
+        <rosparam file="$(find ros_bridge_host)/param/param.yaml" command="load"/>
+        <rosparam>
+        </rosparam>
+    </node>
+</launch>
+
