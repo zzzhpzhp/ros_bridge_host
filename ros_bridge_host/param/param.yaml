@@ -1,4 +1,6 @@
-# 配置接收来自算法板的ZMQ消息
+# zmq消息前缀
 namespace: robot
+# 远程客户地址
 sub_address: tcp://localhost:5556
+# 发送地址
 pub_address: tcp://*:5557

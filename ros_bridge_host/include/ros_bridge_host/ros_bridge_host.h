@@ -30,7 +30,7 @@ protected:
     Json::Value sub_root_;
     Json::FastWriter fw_;
 
-    int queue_size_{1};
+    int queue_size_{10};
 
     std::mutex publisher_mtx_;
 
