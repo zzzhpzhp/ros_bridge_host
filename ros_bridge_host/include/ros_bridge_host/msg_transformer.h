@@ -326,4 +326,26 @@ namespace ros_bridge_host
 
         publisher.publish(msg);
     }
+
+    inline void _deserialize_polygon(Json::Value &root, const ros::Publisher &publisher)
+    {
+        geometry_msgs::PolygonStamped msg;
+
+        msg.header.frame_id = root[HEADER_STR][FRAME_ID_STR].asString();
+        msg.header.stamp = ros::Time::now();
+
+        geometry_msgs::Point32 point;
+
+        auto &points = root["points"];
+        for (auto &p : points)
+        {
+            point.x = p["x"].asFloat();
+            point.y = p["y"].asFloat();
+            point.z = 0.0f;
+
+            msg.polygon.points.emplace_back(point);
+        }
+
+        publisher.publish(msg);
+    }
 }

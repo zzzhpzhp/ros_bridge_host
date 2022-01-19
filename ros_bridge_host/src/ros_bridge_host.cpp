@@ -35,6 +35,7 @@ namespace ros_bridge_host
             {
                 continue;
             }
+            free(header);
             auto body = _recv_data(subscriber_, ZMQ_DONTWAIT);
             if (!body)
             {
@@ -42,7 +43,9 @@ namespace ros_bridge_host
             }
 
             sub_root_.clear();
-            if (!reader_.parse(body, sub_root_))
+            bool parse_res = reader_.parse(body, sub_root_);
+            free(body);
+            if (!parse_res)
             {
                 std::cerr << "Environment config file parse failed." << std::endl;
             }
@@ -103,14 +106,17 @@ namespace ros_bridge_host
         zmq_msg_t msg;
         zmq_msg_init(&msg);
         int size = zmq_msg_recv(&msg, socket, opt);
+//        std::string res;
         if(size == -1)
         {
+            zmq_msg_close(&msg);
             return nullptr;
         }
 
         // 将zmq_msg_t对象中的数据保存到字符串中
         char *data = (char*)malloc(size + 1);
         memcpy(data, zmq_msg_data(&msg), size);
+//        res.append((char*)zmq_msg_data(&msg));
 
         zmq_msg_close(&msg);
         data[size] = 0;
@@ -167,6 +173,12 @@ namespace ros_bridge_host
                     std::make_shared<ros::Publisher>(nh_.advertise<visualization_msgs::Marker>(topic_name, queue_size_));
             return true;
         }
+        else if (type == "geometry_msgs::PolygonStamped")
+        {
+            topic_to_publisher_[topic_name] =
+                    std::make_shared<ros::Publisher>(nh_.advertise<geometry_msgs::PolygonStamped>(topic_name, queue_size_));
+            return true;
+        }
         else
         {
             std::cerr << "Don't support the topic type: " << type << std::endl;
@@ -204,6 +216,10 @@ namespace ros_bridge_host
         else if (type == "visualization_msgs::Marker")
         {
             _deserialize_marker(sub_root_, *topic_to_publisher_[topic_name]);
+        }
+        else if (type == "geometry_msgs::PolygonStamped")
+        {
+            _deserialize_polygon(sub_root_, *topic_to_publisher_[topic_name]);
         }
     }
 }
