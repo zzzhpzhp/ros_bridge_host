@@ -17,6 +17,7 @@ private:
 
     std::string sub_address{};
     std::string pub_address{};
+    float frequency_{100.0f}, interval_{1.0f / frequency_};
     ros::NodeHandle nh_;
     std::unordered_map<std::string, std::shared_ptr<ros::Publisher> > topic_to_publisher_;
     ros::Subscriber cmd_sub_, goal_sub_;

@@ -58,10 +58,10 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/Polygon.h>
+//#include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Pose2D.h>
+//#include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
 //#include <geometry_msgs/PoseWithCovariance.h>
@@ -70,7 +70,7 @@
 //#include <geometry_msgs/Transform.h>
 //#include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Twist.h>
-#include <geometry_msgs/TwistStamped.h>
+//#include <geometry_msgs/TwistStamped.h>
 //#include <geometry_msgs/TwistWithCovariance.h>
 //#include <geometry_msgs/TwistWithCovarianceStamped.h>
 //#include <geometry_msgs/Vector3.h>
@@ -138,7 +138,7 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include <dynamic_reconfigure/server.h>
+//#include <dynamic_reconfigure/server.h>
 
 // tf
 // http://docs.ros.org/en/api/tf/html/index-msg.html
@@ -345,6 +345,27 @@ namespace ros_bridge_host
 
             msg.polygon.points.emplace_back(point);
         }
+
+        publisher.publish(msg);
+    }
+
+    inline void _deserialize_occupancy_grid(Json::Value &root, const ros::Publisher &publisher)
+    {
+        nav_msgs::OccupancyGrid msg;
+
+        msg.header.frame_id = root[HEADER_STR][FRAME_ID_STR].asString();
+        msg.header.stamp = ros::Time::now();
+
+        msg.info.height = root["height"].asInt();
+        msg.info.width = root["width"].asInt();
+        msg.info.resolution = root["resolution"].asFloat();
+        msg.info.origin.position.x = root["position"]["x"].asFloat();
+        msg.info.origin.position.y = root["position"]["y"].asFloat();
+        msg.info.origin.position.z = root["position"]["z"].asFloat();
+        msg.info.origin.orientation = tf::createQuaternionMsgFromYaw(root["orientation"]["theta"].asFloat());
+
+        const auto& str = root["data"].asString();
+        msg.data.assign(str.begin(), str.end());
 
         publisher.publish(msg);
     }

@@ -4,3 +4,5 @@ namespace: robot
 sub_address: tcp://localhost:5556
 # 发送地址
 pub_address: tcp://*:5557
+# 消息查询处理频率
+frequency: 100

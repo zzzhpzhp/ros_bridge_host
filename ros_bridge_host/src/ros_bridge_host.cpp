@@ -8,8 +8,11 @@ namespace ros_bridge_host
 
         nh_.param("sub_address", sub_address, std::string("tcp://localhost:5556"));
         nh_.param("pub_address", pub_address, std::string("tcp://*:5557"));
+        nh_.param("frequency", frequency_, 100.0f);
+        interval_ = 1.0f / frequency_;
         ROS_INFO_STREAM("Subscribe address " << sub_address);
         ROS_INFO_STREAM("Publish address " << pub_address);
+        ROS_INFO_STREAM("Message check frequency " << frequency_ << " Hz");
     }
 
     void ROSBridgeHost::start()
@@ -28,7 +31,7 @@ namespace ros_bridge_host
         while(ros::ok())
         {
             ros::spinOnce();
-            sleep(0.01);
+            sleep(interval_);
 
             auto header = _recv_data(subscriber_, ZMQ_DONTWAIT);
             if (!header)
@@ -106,7 +109,6 @@ namespace ros_bridge_host
         zmq_msg_t msg;
         zmq_msg_init(&msg);
         int size = zmq_msg_recv(&msg, socket, opt);
-//        std::string res;
         if(size == -1)
         {
             zmq_msg_close(&msg);
@@ -116,7 +118,6 @@ namespace ros_bridge_host
         // 将zmq_msg_t对象中的数据保存到字符串中
         char *data = (char*)malloc(size + 1);
         memcpy(data, zmq_msg_data(&msg), size);
-//        res.append((char*)zmq_msg_data(&msg));
 
         zmq_msg_close(&msg);
         data[size] = 0;
@@ -131,60 +132,78 @@ namespace ros_bridge_host
             return true;
         }
 
+        bool res{false};
+
         if (type == "geometry_msgs::PointStamped")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<geometry_msgs::PointStamped>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "nav_msgs::Path")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<nav_msgs::Path>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "tf::tfMessage")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<tf::tfMessage>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "sensor_msgs::LaserScan")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<sensor_msgs::LaserScan>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "geometry_msgs::PoseStamped")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<geometry_msgs::PoseStamped>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "geometry_msgs::PoseArray")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<geometry_msgs::PoseArray>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "visualization_msgs::Marker")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<visualization_msgs::Marker>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else if (type == "geometry_msgs::PolygonStamped")
         {
             topic_to_publisher_[topic_name] =
                     std::make_shared<ros::Publisher>(nh_.advertise<geometry_msgs::PolygonStamped>(topic_name, queue_size_));
-            return true;
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
+        }
+        else if (type == "nav_msgs::OccupancyGrid")
+        {
+            topic_to_publisher_[topic_name] =
+                    std::make_shared<ros::Publisher>(nh_.advertise<nav_msgs::OccupancyGrid>(topic_name, queue_size_));
+            ROS_INFO_STREAM_ONCE("Received topic: " << topic_name);
+            res = true;
         }
         else
         {
             std::cerr << "Don't support the topic type: " << type << std::endl;
         }
 
-        return false;
+
+        return res;
     }
 
     void ROSBridgeHost::_trans_and_pub(std::string type, std::string topic_name)
@@ -220,6 +239,10 @@ namespace ros_bridge_host
         else if (type == "geometry_msgs::PolygonStamped")
         {
             _deserialize_polygon(sub_root_, *topic_to_publisher_[topic_name]);
+        }
+        else if (type == "nav_msgs::OccupancyGrid")
+        {
+            _deserialize_occupancy_grid(sub_root_, *topic_to_publisher_[topic_name]);
         }
     }
 }
